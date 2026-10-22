@@ -1,18 +1,28 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import React from 'react';
+import { PaperProvider, MD3LightTheme as DefaultTheme } from 'react-native-paper';
+import { Stack } from 'expo-router';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
 
-SplashScreen.preventAutoHideAsync();
+const temaBiblioteca = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#007BFF',
+    secondary: '#28a745', 
+    background: '#f5f5f5',
+  },
+};
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+
+    <PaperProvider theme={temaBiblioteca}>
+      
+      <Stack screenOptions={{ headerShown: false }}>
+        {/* Dizemos ao Expo que a rota principal será o nosso grupo de abas (tabs) */}
+        <Stack.Screen name="(tabs)" />
+      </Stack>
+      
+    </PaperProvider>
   );
 }

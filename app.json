@@ -17,7 +17,11 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.NFC"
+      ],
+      "package": "com.vinicios_rosa.appbibliotecaiot"
     },
     "web": {
       "output": "server",
@@ -32,11 +36,27 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "react-native-nfc-manager",
+        {
+          "nfcPermission": "Este aplicativo precisa de acesso ao NFC para ler e cadastrar os livros da biblioteca."
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "03aef4b9-0d77-4762-a4b8-662b3c9f0675"
+      }
     }
   }
 }
