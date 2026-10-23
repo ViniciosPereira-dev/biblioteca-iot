@@ -10,10 +10,13 @@ export default function Cadastro() {
 
   const [titulo, setTitulo] = useState("");
   const [autor, setAutor] = useState("");
+  const [genero, setGenero] = useState('');
   const [isbn, setIsbn] = useState("");
   const [statusTexto, setStatusTexto] = useState(
     "Preencha os dados e leia a tag.",
   );
+  const [estante, setEstante] = useState("");
+  const [prateleira, setPrateleira] = useState("");
   const [carregando, setCarregando] = useState(false);
 
   async function lerEtiquetaESalvar() {
@@ -34,11 +37,18 @@ export default function Cadastro() {
       const uid = tag.id;
       setStatusTexto(`Lendo Tag: ${uid}...`);
 
-      // 🚨 ATENÇÃO: COLOQUE SEU IP AQUI
       const resposta = await fetch("http://192.168.1.2:3000/api/livros", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ rfid_tag: uid, titulo, autor, isbn }), // <- ISBN adicionado!
+        body: JSON.stringify({
+          rfid_tag: uid,
+          titulo,
+          autor,
+          genero,
+          isbn,
+          estante,
+          prateleira,
+        }),
       });
 
       if (resposta.status === 201) {
@@ -48,6 +58,8 @@ export default function Cadastro() {
         setTitulo("");
         setAutor("");
         setIsbn("");
+        setEstante("");
+        setPrateleira("");
       } else {
         const erro = await resposta.json();
         Alert.alert("Aviso", erro.erro || "Erro ao cadastrar.");
@@ -83,6 +95,15 @@ export default function Cadastro() {
           onChangeText={setAutor}
           style={styles.input}
         />
+
+        <TextInput
+          label="Gênero (ex: Tecnologia, Ficção, Biografia)"
+          value={genero}
+          onChangeText={text => setGenero(text)}
+          mode="outlined"
+          style={styles.input} // Use o mesmo estilo que você já usa nos outros campos
+        />
+
         <TextInput
           mode="outlined"
           label="ISBN (Apenas números)"
@@ -91,6 +112,29 @@ export default function Cadastro() {
           keyboardType="numeric"
           style={styles.input}
         />
+
+        <View
+          style={{
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 15,
+          }}
+        >
+          <TextInput
+            mode="outlined"
+            label="Estante (Ex: 3, Bio)"
+            value={estante}
+            onChangeText={setEstante}
+            style={{ flex: 1, marginRight: 5, backgroundColor: "#fff" }}
+          />
+          <TextInput
+            mode="outlined"
+            label="Prat. (Ex: 2, Sup)"
+            value={prateleira}
+            onChangeText={setPrateleira}
+            style={{ flex: 1, marginLeft: 5, backgroundColor: "#fff" }}
+          />
+        </View>
 
         <Text style={styles.status}>{statusTexto}</Text>
 

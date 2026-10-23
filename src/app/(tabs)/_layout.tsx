@@ -1,56 +1,71 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from 'react-native-paper';
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
+import { useTheme } from "react-native-paper";
 
 export default function TabsLayout() {
-  // Puxa as cores que definimos no root layout
   const theme = useTheme();
 
   return (
     <Tabs
       screenOptions={{
-        headerShown: false,                          // Mostra a barra de título no topo
-        tabBarActiveTintColor: theme.colors.primary, // Cor do ícone quando a aba está selecionada
-        tabBarInactiveTintColor: '#888',             // Cor do ícone inativo
-        headerStyle: { 
-          backgroundColor: theme.colors.primary      // Cor da barra de título no topo
-        },
-        headerTintColor: '#fff',                     // Cor do texto do título no topo
+        headerShown: false,
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: "#888",
       }}
     >
-      {/* Aba 1: Catálogo (index.tsx) */}
+      {/* Catálogo */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Catálogo',
+          title: "Catalogo",
           tabBarIcon: ({ color }) => (
             <MaterialCommunityIcons name="bookshelf" size={26} color={color} />
           ),
         }}
       />
 
-      {/* Aba 2: Cadastrar Livro (cadastro.tsx) */}
+      {/* Cadastro */}
       <Tabs.Screen
         name="cadastro"
         options={{
-          title: 'Cadastrar NFC',
+          title: "Cadastrar NFC",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="nfc-variant" size={26} color={color} />
+            <MaterialCommunityIcons
+              name="nfc-variant"
+              size={26}
+              color={color}
+            />
           ),
         }}
       />
 
-      {/* Aba 3: Empréstimos (operacoes.tsx) */}
+      {/* Empréstimos */}
       <Tabs.Screen
         name="operacoes"
         options={{
-          title: 'Empréstimos',
+          title: "Empréstimos",
           tabBarIcon: ({ color }) => (
-            <MaterialCommunityIcons name="book-account" size={26} color={color} />
+            <MaterialCommunityIcons
+              name="book-account"
+              size={26}
+              color={color}
+            />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="leitores" // TEM QUE SER O NOME EXATO DO ARQUIVO (ex: se for cadastroLeitor.js, ponha "cadastroLeitor")
+        options={{
+          title: 'Leitores',
+          tabBarIcon: ({ color }) => (
+            // Lembre-se de importar o MaterialCommunityIcons no topo, se já não tiver!
+            <MaterialCommunityIcons name="account-plus" size={24} color={color} />
           ),
         }}
       />
     </Tabs>
+
+    
   );
 }

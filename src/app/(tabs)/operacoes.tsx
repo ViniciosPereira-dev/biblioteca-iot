@@ -7,6 +7,7 @@ export default function Operacoes() {
   const theme = useTheme();
 
   // Estados para o Empréstimo
+  const [nome, setNome] = useState("");
   const [cpf, setCpf] = useState("");
   const [telefone, setTelefone] = useState("");
 
@@ -16,8 +17,8 @@ export default function Operacoes() {
 
   // 1. Função de EMPRESTAR
   async function registrarEmprestimo() {
-    if (!cpf || !telefone) {
-      Alert.alert("Atenção", "Digite o CPF/RA e o Telefone do aluno.");
+    if (!nome || !cpf || !telefone) {
+      Alert.alert("Atenção", "Preencha todos os campos antes de registrar o empréstimo.");
       return;
     }
 
@@ -120,6 +121,14 @@ export default function Operacoes() {
         <Text style={styles.instrucao}>
           Preencha os dados e leia a tag para emprestar.
         </Text>
+
+        <TextInput
+          mode="outlined"
+          label="Nome Completo do Aluno"
+          value={nome}
+          onChangeText={setNome}
+          style={styles.input}
+        />
 
         <TextInput
           mode="outlined"
