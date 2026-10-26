@@ -1,29 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
 import {
-  View,
-  StyleSheet,
   FlatList,
   RefreshControl,
-  StatusBar,
-  TouchableOpacity,
   ScrollView,
-} from 'react-native';
+  StatusBar,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { MaterialCommunityIcons } from '@expo/vector-icons'; 
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import {
-  useTheme,
-  Text,
-  Card,
-  Badge,
   ActivityIndicator,
-  Searchbar,
-  Chip,
-  Portal,
-  Modal,
+  Badge,
   Button,
-} from 'react-native-paper';
+  Card,
+  Chip,
+  Modal,
+  Portal,
+  Searchbar,
+  Text,
+  useTheme,
+} from "react-native-paper";
 
 export default function Catalogo() {
   const theme = useTheme();
@@ -31,8 +31,8 @@ export default function Catalogo() {
 
   const [livros, setLivros] = useState([]);
   const [carregando, setCarregando] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filtroGenero, setFiltroGenero] = useState('TODOS');
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filtroGenero, setFiltroGenero] = useState("TODOS");
 
   // Estados para controlar o Modal de Exemplares
   const [modalVisivel, setModalVisivel] = useState(false);
@@ -41,14 +41,14 @@ export default function Catalogo() {
   const carregarLivros = async () => {
     setCarregando(true);
     try {
-      const resposta = await fetch('http://192.168.1.2:3000/api/livros');
+      const resposta = await fetch("http://192.168.1.4:3000/api/livros");
       if (!resposta.ok) {
         throw new Error(`Erro HTTP: ${resposta.status}`);
       }
       const dados = await resposta.json();
       setLivros(Array.isArray(dados) ? dados : []);
     } catch (error) {
-      console.warn('Erro ao buscar livros:', error);
+      console.warn("Erro ao buscar livros:", error);
     } finally {
       setCarregando(false);
     }
@@ -58,58 +58,70 @@ export default function Catalogo() {
     carregarLivros();
   }, []);
 
+  const formatarData = (dataIso) => {
+    if (!dataIso) return "Não definida";
+    const data = new Date(dataIso);
+    // Garante o formato DD/MM/AAAA usando o padrão local brasileiro
+    return data.toLocaleDateString("pt-BR", { timeZone: "UTC" });
+  };
+
   // Lógica de agrupamento aprimorada (guarda o array de exemplares detalhados)
   const agruparLivros = (listaDeLivros) => {
     const grupos = listaDeLivros.reduce((acumulador, livro) => {
-      const chave = livro.isbn || livro.titulo; 
-      
+      const chave = livro.isbn || livro.titulo;
+
       if (!acumulador[chave]) {
         acumulador[chave] = {
           ...livro,
           quantidadeTotal: 0,
           quantidadeDisponivel: 0,
-          exemplares: [] // Guarda os detalhes de cada exemplar físico
+          exemplares: [], // Guarda os detalhes de cada exemplar físico
         };
       }
-      
+
       acumulador[chave].quantidadeTotal += 1;
-      
-      const isDisponivel = String(livro.status ?? '').toUpperCase() === 'DISPONIVEL';
+
+      const isDisponivel =
+        String(livro.status ?? "").toUpperCase() === "DISPONIVEL";
       if (isDisponivel) {
         acumulador[chave].quantidadeDisponivel += 1;
       }
-      
+
       acumulador[chave].exemplares.push({
         id: livro.id,
         rfid_tag: livro.rfid_tag,
-        status: livro.status || 'DISPONIVEL',
+        status: livro.status || "DISPONIVEL",
         estante: livro.estante,
         prateleira: livro.prateleira,
         leitor_nome: livro.leitor_nome,
+        leitor_telefone: livro.leitor_telefone,
         data_devolucao: livro.data_devolucao,
       });
-      
+
       return acumulador;
     }, {});
-    
+
     return Object.values(grupos);
   };
 
   const listaAgrupada = agruparLivros(livros);
 
-
-  const generosUnicos = [...new Set(listaAgrupada.map(livro => livro.genero || 'Outros'))].sort();
-  const generosDisponiveis = ['TODOS', ...generosUnicos];
+  const generosUnicos = [
+    ...new Set(listaAgrupada.map((livro) => livro.genero || "Outros")),
+  ].sort();
+  const generosDisponiveis = ["TODOS", ...generosUnicos];
 
   const livrosFiltrados = listaAgrupada.filter((livro) => {
-    const titulo = String(livro.titulo ?? '').toLowerCase();
-    const autor = String(livro.autor ?? '').toLowerCase();
+    const titulo = String(livro.titulo ?? "").toLowerCase();
+    const autor = String(livro.autor ?? "").toLowerCase();
     const termoBusca = searchQuery.trim().toLowerCase();
 
-    const bateuTexto = titulo.includes(termoBusca) || autor.includes(termoBusca);
+    const bateuTexto =
+      titulo.includes(termoBusca) || autor.includes(termoBusca);
 
-    const generoLivro = livro.genero || 'Outros';
-    const bateuGenero = filtroGenero === 'TODOS' || generoLivro === filtroGenero;
+    const generoLivro = livro.genero || "Outros";
+    const bateuGenero =
+      filtroGenero === "TODOS" || generoLivro === filtroGenero;
 
     return bateuTexto && bateuGenero;
   });
@@ -117,27 +129,27 @@ export default function Catalogo() {
   const renderizarLivro = ({ item }) => {
     const urlCapa = item.isbn
       ? `https://covers.openlibrary.org/b/isbn/${item.isbn}-M.jpg`
-      : 'https://placehold.co/150x220?text=Sem+Capa';
+      : "https://placehold.co/150x220?text=Sem+Capa";
 
     const qtdEmprestados = item.quantidadeTotal - item.quantidadeDisponivel;
     const temDisponivel = item.quantidadeDisponivel > 0;
 
-    const corBadge = temDisponivel ? '#10B981' : '#E02041';
-    const textoBadge = temDisponivel 
-      ? `${item.quantidadeDisponivel} de ${item.quantidadeTotal} Disp.` 
-      : 'Indisponível';
+    const corBadge = temDisponivel ? "#10B981" : "#E02041";
+    const textoBadge = temDisponivel
+      ? `${item.quantidadeDisponivel} de ${item.quantidadeTotal} Disp.`
+      : "Indisponível";
 
-    let textoLocalizacao = 'Local não cadastrado';
+    let textoLocalizacao = "Local não cadastrado";
     if (item.estante && item.prateleira) {
-      textoLocalizacao = `Estante ${item.estante}, Prat. ${item.prateleira}`;
+      textoLocalizacao = `Estante: ${item.estante}, Prat. ${item.prateleira}`;
     } else if (item.estante) {
-      textoLocalizacao = `Estante ${item.estante}`;
+      textoLocalizacao = `Estante: ${item.estante}`;
     } else if (item.prateleira) {
-      textoLocalizacao = `Prateleira ${item.prateleira}`;
+      textoLocalizacao = `Prateleira: ${item.prateleira}`;
     }
 
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => {
           setLivroSelecionado(item);
@@ -151,17 +163,21 @@ export default function Catalogo() {
             <Card.Content style={styles.cartaoConteudo}>
               <View>
                 <View style={styles.cabecalhoCard}>
-                  <Text variant="titleMedium" style={styles.titulo} numberOfLines={2}>
-                    {item.titulo || 'Título não informado'}
+                  <Text
+                    variant="titleMedium"
+                    style={styles.titulo}
+                    numberOfLines={2}
+                  >
+                    {item.titulo || "Título não informado"}
                   </Text>
-                  
+
                   <Badge
                     size={24}
                     style={[
                       styles.badge,
                       {
-                        backgroundColor: corBadge, 
-                        color: '#fff'
+                        backgroundColor: corBadge,
+                        color: "#fff",
                       },
                     ]}
                   >
@@ -169,12 +185,20 @@ export default function Catalogo() {
                   </Badge>
                 </View>
 
-                <Text variant="bodyMedium" style={styles.autor} numberOfLines={1}>
-                  {item.autor || 'Autor não informado'}
+                <Text
+                  variant="bodyMedium"
+                  style={styles.autor}
+                  numberOfLines={1}
+                >
+                  {item.autor || "Autor não informado"}
                 </Text>
-                
+
                 <View style={styles.containerLocalizacao}>
-                  <MaterialCommunityIcons name="map-marker-outline" size={14} color="#E02041" />
+                  <MaterialCommunityIcons
+                    name="map-marker-outline"
+                    size={14}
+                    color="#E02041"
+                  />
                   <Text style={styles.textoLocalizacao} numberOfLines={1}>
                     {textoLocalizacao}
                   </Text>
@@ -184,8 +208,8 @@ export default function Catalogo() {
               <View style={styles.rodapeCartao}>
                 <View style={styles.containerTag}>
                   <Text style={styles.textoTag}>
-                    {item.quantidadeTotal === 1 
-                      ? `RFID: ${item.exemplares[0]?.rfid_tag || 'N/A'}` 
+                    {item.quantidadeTotal === 1
+                      ? `RFID: ${item.exemplares[0]?.rfid_tag || "N/A"}`
                       : `Toque para ver os ${item.quantidadeTotal} exemplares`}
                   </Text>
                 </View>
@@ -200,7 +224,7 @@ export default function Catalogo() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
-      
+
       <View style={styles.areaFiltros}>
         <Searchbar
           placeholder="Buscar livro ou autor..."
@@ -221,9 +245,15 @@ export default function Catalogo() {
                 onPress={() => setFiltroGenero(genero)}
                 style={[
                   styles.chip,
-                  filtroGenero === genero ? styles.chipSelecionado : styles.chipNaoSelecionado,
+                  filtroGenero === genero
+                    ? styles.chipSelecionado
+                    : styles.chipNaoSelecionado,
                 ]}
-                textStyle={filtroGenero === genero ? styles.textoSelecionado : styles.textoNaoSelecionado}
+                textStyle={
+                  filtroGenero === genero
+                    ? styles.textoSelecionado
+                    : styles.textoNaoSelecionado
+                }
                 showSelectedCheck={false}
                 compact
               >
@@ -235,304 +265,321 @@ export default function Catalogo() {
       </View>
 
       {carregando && livros.length === 0 ? (
-        <ActivityIndicator animating={true} size="large" color="#1A1A1A" style={styles.loading} />
+        <ActivityIndicator
+          animating={true}
+          size="large"
+          color="#1A1A1A"
+          style={styles.loading}
+        />
       ) : (
         <FlatList
           data={livrosFiltrados}
-          keyExtractor={(item, index) => String(item.isbn ?? item.titulo ?? index)}
+          keyExtractor={(item, index) =>
+            String(item.isbn ?? item.titulo ?? index)
+          }
           renderItem={renderizarLivro}
           contentContainerStyle={styles.lista}
-          refreshControl={<RefreshControl refreshing={carregando} onRefresh={carregarLivros} tintColor="#1A1A1A" />}
+          refreshControl={
+            <RefreshControl
+              refreshing={carregando}
+              onRefresh={carregarLivros}
+              tintColor="#1A1A1A"
+            />
+          }
           ListEmptyComponent={
             <Text style={styles.textoVazio}>
-              {searchQuery.trim() !== ''
-                ? 'Nenhum livro encontrado com esta busca.'
-                : filtroGenero !== 'TODOS'
-                ? 'Nenhum livro encontrado neste filtro.'
-                : 'Nenhum livro cadastrado na biblioteca ainda.'}
+              {searchQuery.trim() !== ""
+                ? "Nenhum livro encontrado com esta busca."
+                : filtroGenero !== "TODOS"
+                  ? "Nenhum livro encontrado neste filtro."
+                  : "Nenhum livro cadastrado na biblioteca ainda."}
             </Text>
           }
         />
       )}
 
       {/* MODAL DE DETALHES DOS EXEMPLARES */}
+      {/* PORTAL DO MODAL DE EXEMPLARES COM A DATA DE DEVOLUÇÃO */}
+      {/* PORTAL DO MODAL DE EXEMPLARES CORRIGIDO */}
       <Portal>
         <Modal
           visible={modalVisivel}
           onDismiss={() => setModalVisivel(false)}
-          contentContainerStyle={styles.modalContainer}
+          contentContainerStyle={[styles.modalConteudo, { backgroundColor: theme.colors.surface }]}
         >
-          {livroSelecionado && (
-            <View>
-              <Text variant="titleLarge" style={styles.modalTitulo}>
-                {livroSelecionado.titulo}
-              </Text>
-              <Text variant="bodyMedium" style={styles.modalAutor}>
-                Autor: {livroSelecionado.autor}
-              </Text>
+          <Text variant="titleLarge" style={styles.modalTitulo} numberOfLines={2}>
+            {livroSelecionado?.titulo || "Exemplares"}
+          </Text>
 
-              <Text style={styles.modalSubtitulo}>
-                Exemplares Físicos ({livroSelecionado.quantidadeTotal}):
-              </Text>
+          <ScrollView style={{ maxHeight: 340, marginTop: 12 }} showsVerticalScrollIndicator={false}>
+            {livroSelecionado?.exemplares.map((ex, index) => (
+              <View key={ex.id || index} style={styles.itemExemplar}>
+                <View style={styles.linhaExemplarCabecalho}>
+                  <Text variant="bodyLarge" style={styles.textoRfid}>Tag: {ex.rfid_tag}</Text>
+                  
+                  {/* AJUSTE 1: Cores do Status em Array */}
+                  <View style={[
+                    styles.miniBadge, 
+                    ex.status === "DISPONIVEL" ? styles.miniBadgeVerde : styles.miniBadgeVermelho
+                  ]}>
+                    <Text style={styles.miniBadgeTexto}>{ex.status}</Text>
+                  </View>
+                </View>
 
-              <ScrollView style={styles.modalListaExemplares}>
-{livroSelecionado.exemplares.map((ex, idx) => {
-                  const emprestado = String(ex.status ?? '').toUpperCase() === 'EMPRESTADO';
-                  return (
-                    <View key={ex.id || idx} style={styles.itemExemplar}>
-                      <View style={{ flex: 1, paddingRight: 10 }}>
-                        <Text style={styles.itemRfid}>RFID: {ex.rfid_tag}</Text>
-                        <Text style={styles.itemLocal}>
-                          Local: Estante {ex.estante}, Prat. {ex.prateleira}
-                        </Text>
-                        
-                        {/* A MÁGICA ACONTECE AQUI: Só aparece se estiver emprestado */}
-                        {emprestado && (
-                          <View style={{ marginTop: 8, padding: 8, backgroundColor: '#FEE2E2', borderRadius: 6 }}>
-                            <Text style={{ fontSize: 12, color: '#991B1B', fontWeight: 'bold' }}>
-                              👤 Leitor: {ex.leitor_nome || 'CPF não cadastrado'}
-                            </Text>
-                            <Text style={{ fontSize: 11, color: '#991B1B' }}>
-                              📅 Devolução: {ex.data_devolucao ? new Date(ex.data_devolucao).toLocaleDateString('pt-BR') : 'Data não definida'}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                      
-                      <Badge
-                        size={22}
-                        style={{
-                          backgroundColor: emprestado ? '#E02041' : '#10B981',
-                          color: '#fff',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {ex.status}
-                      </Badge>
+                {/* AJUSTE 2: Bloco estrutural com fechamento correto das Views de Detalhes */}
+                {ex.status === "EMPRESTADO" && (
+                  <View style={styles.containerDetalhesEmprestimo}>
+                    <View style={styles.linhaInfoLeitor}>
+                      <MaterialCommunityIcons name="account-outline" size={16} color="#4B5563" />
+                      <Text style={styles.textoInfoLeitor}>Leitor: {ex.leitor_nome || "Não identificado"}</Text>
                     </View>
-                  );
-                })}
-              </ScrollView>
+                    
+                    {ex.leitor_telefone && (
+                      <View style={styles.linhaInfoLeitor}>
+                        <MaterialCommunityIcons name="phone-outline" size={16} color="#4B5563" />
+                        <Text style={styles.textoInfoLeitor}>Contato: {ex.leitor_telefone}</Text>
+                      </View>
+                    )}
 
-              <Button
-                mode="contained"
-                onPress={() => setModalVisivel(false)}
-                style={styles.botaoFechar}
-                buttonColor="#1A1A1A"
-              >
-                Fechar
-              </Button>
-            </View>
-          )}
+                    <View style={styles.linhaInfoLeitor}>
+                      <MaterialCommunityIcons name="calendar-clock" size={16} color="#4B5563" />
+                      <Text style={styles.textoInfoLeitor}>Devolução: {formatarData(ex.data_devolucao)}</Text>
+                    </View>
+                  </View>
+                )}
+              </View>
+            ))}
+          </ScrollView>
+
+          <Button mode="contained" onPress={() => setModalVisivel(false)} style={styles.btnFecharModal}>
+            Fechar Janela
+          </Button>
         </Modal>
       </Portal>
+
     </SafeAreaView>
   );
 }
 
 const getStyles = (theme) =>
   StyleSheet.create({
+    // Container Principal
     container: {
       flex: 1,
-      backgroundColor: '#F7F7F7', 
+      backgroundColor: "#FFFFFF",
     },
-    areaFiltros: {
-      backgroundColor: '#FFFFFF',
-      paddingHorizontal: 15,
-      paddingTop: 15,
-      paddingBottom: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: '#EBEBEB',
-      elevation: 0,
-    },
-    searchbar: {
-      backgroundColor: '#F5F5F5',
-      borderRadius: 12,
-      marginBottom: 16,
-      height: 50,
-      elevation: 0,
-    },
-    inputSearch: {
-      minHeight: 0,
-      color: '#1A1A1A',
-    },
-    areaChips: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      alignItems: 'center',
-      justifyContent: 'flex-start',
-      marginHorizontal: -4,
-    },
-    chip: {
-      marginHorizontal: 4,
-      marginBottom: 8,
-      flexShrink: 0,
-      borderRadius: 20,
-    },
-    chipSelecionado: {
-      backgroundColor: '#1A1A1A',
-      borderWidth: 1,
-      borderColor: '#1A1A1A',
-    },
-    chipNaoSelecionado: {
-      backgroundColor: '#FFFFFF',
-      borderWidth: 1,
-      borderColor: '#E5E5E5',
-    },
-    textoSelecionado: {
-      color: '#FFFFFF',
-      fontWeight: '700',
-    },
-    textoNaoSelecionado: {
-      color: '#717171',
-      fontWeight: '500',
+    loading: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
     },
     lista: {
-      padding: 15,
-      paddingBottom: 100,
+      padding: 16,
+      paddingBottom: 32,
     },
+    textoVazio: {
+      textAlign: "center",
+      color: "#717171",
+      marginTop: 40,
+      fontSize: 16,
+    },
+
+    // Área de Busca e Filtros (Chips)
+    areaFiltros: {
+      paddingHorizontal: 16,
+      paddingTop: 8,
+      paddingBottom: 12,
+      backgroundColor: "#FFFFFF",
+      borderBottomWidth: 1,
+      borderBottomColor: "#F3F4F6",
+    },
+    searchbar: {
+      backgroundColor: "#F9FAFB",
+      borderRadius: 8,
+      elevation: 0,
+      height: 48,
+    },
+    inputSearch: {
+      fontSize: 15,
+      minHeight: 48,
+    },
+    areaChips: {
+      marginTop: 12,
+      flexDirection: "row",
+    },
+    chip: {
+      marginRight: 8,
+      height: 32,
+      alignItems: "center",
+      justifyContent: "center",
+      borderRadius: 16,
+    },
+    chipSelecionado: {
+      backgroundColor: "#1A1A1A",
+    },
+    chipNaoSelecionado: {
+      backgroundColor: "#F3F4F6",
+    },
+    textoSelecionado: {
+      color: "#FFFFFF",
+      fontSize: 13,
+      fontWeight: "600",
+    },
+    textoNaoSelecionado: {
+      color: "#4B5563",
+      fontSize: 13,
+    },
+
+    // Cartão do Livro (Lista Principal)
     cartao: {
-      marginBottom: 15,
-      backgroundColor: '#FFFFFF',
-      overflow: 'hidden',
+      backgroundColor: "#FFFFFF",
+      marginBottom: 14,
       borderRadius: 12,
-      borderWidth: 1,
-      borderColor: '#EFEFEF',
-      elevation: 2,
-      shadowColor: '#000',
+      shadowColor: "#000",
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.05,
-      shadowRadius: 4,
+      shadowRadius: 8,
+      elevation: 2,
     },
     linhaLivro: {
-      flexDirection: 'row',
+      flexDirection: "row",
+      padding: 12,
     },
     capaLivro: {
-      width: 90, 
-      height: 135,
-      borderTopRightRadius: 0,
-      borderBottomRightRadius: 0,
-      backgroundColor: '#F5F5F5',
+      width: 90,
+      height: 130,
+      borderRadius: 6,
+      backgroundColor: "#F3F4F6",
     },
     cartaoConteudo: {
       flex: 1,
-      paddingVertical: 12,
-      paddingHorizontal: 12,
-      justifyContent: 'space-between',
+      paddingLeft: 14,
+      paddingVertical: 2,
+      justifyContent: "space-between",
     },
     cabecalhoCard: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'flex-start',
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "flex-start",
+      width: "100%",
     },
     titulo: {
-      fontWeight: '800',
-      color: '#1A1A1A',
-      fontSize: 16,
-      flex: 1, 
-      marginRight: 8, 
+      fontWeight: "700",
+      color: "#111827",
+      flex: 1,
+      paddingRight: 8,
+      lineHeight: 20,
     },
     badge: {
+      alignSelf: "flex-start",
+      fontWeight: "bold",
+      fontSize: 11,
       paddingHorizontal: 8,
-      fontWeight: 'bold',
-      fontSize: 12,
-      marginTop: 2, 
     },
     autor: {
-      color: '#717171',
+      color: "#6B7280",
       marginTop: 4,
-      fontSize: 14,
     },
     containerLocalizacao: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: 6,
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 8,
     },
     textoLocalizacao: {
-      color: '#717171',
-      fontSize: 12,
+      color: "#4B5563",
+      fontSize: 13,
       marginLeft: 4,
-      fontWeight: '500',
     },
     rodapeCartao: {
-      marginTop: 10,
-      alignItems: 'flex-start', 
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 8,
     },
     containerTag: {
-      backgroundColor: '#F5F5F5', 
+      backgroundColor: "#F3F4F6",
       paddingHorizontal: 8,
       paddingVertical: 4,
-      borderRadius: 6,
+      borderRadius: 4,
     },
     textoTag: {
-      color: '#717171', 
+      color: "#374151",
       fontSize: 11,
-      fontFamily: 'monospace', 
-      fontWeight: '600',
-    },
-    loading: {
-      marginTop: 50,
-    },
-    textoVazio: {
-      textAlign: 'center',
-      marginTop: 50,
-      color: '#717171',
-      fontSize: 16,
-      paddingHorizontal: 20,
+      fontWeight: "500",
     },
 
-    // ESTILOS DO MODAL
-    modalContainer: {
-      backgroundColor: 'white',
-      padding: 20,
+    // Modal de Exemplares Detalhado
+    modalConteudo: {
+      padding: 24,
       margin: 20,
       borderRadius: 16,
-      maxHeight: '80%',
+      shadowColor: "#000",
+      shadowOffset: { width: 0, height: 10 },
+      shadowOpacity: 0.1,
+      shadowRadius: 12,
+      elevation: 5,
     },
     modalTitulo: {
-      fontWeight: 'bold',
-      color: '#1A1A1A',
-    },
-    modalAutor: {
-      color: '#717171',
-      marginBottom: 15,
-    },
-    modalSubtitulo: {
-      fontWeight: 'bold',
-      fontSize: 14,
-      color: '#1A1A1A',
-      marginBottom: 10,
-      borderTopWidth: 1,
-      borderTopColor: '#EBEBEB',
-      paddingTop: 12,
-    },
-    modalListaExemplares: {
-      maxHeight: 250,
-      marginBottom: 15,
+      fontWeight: "800",
+      color: "#111827",
+      letterSpacing: -0.5,
     },
     itemExemplar: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      backgroundColor: '#F9FAFB',
+      paddingVertical: 14,
+      borderBottomWidth: 1,
+      borderBottomColor: "#F3F4F6",
+    },
+    linhaExemplarCabecalho: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+    },
+    textoRfid: {
+      fontWeight: "600",
+      color: "#1F2937",
+      fontSize: 15,
+    },
+    containerDetalhesEmprestimo: {
+      marginTop: 10,
+      backgroundColor: "#F9FAFB",
       padding: 10,
       borderRadius: 8,
-      marginBottom: 8,
-      borderWidth: 1,
-      borderColor: '#E5E7EB',
+      borderLeftWidth: 3,
+      borderLeftColor: "#E02041",
     },
-    itemRfid: {
-      fontFamily: 'monospace',
-      fontWeight: 'bold',
-      fontSize: 12,
-      color: '#374151',
+    linhaInfoLeitor: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginTop: 6,
     },
-    itemLocal: {
+    textoInfoLeitor: {
+      marginLeft: 8,
+      color: "#4B5563",
+      fontSize: 14,
+      fontWeight: "500",
+    },
+
+    // Estilos do Mini Badge (Status dentro do Modal)
+    miniBadge: {
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+      borderRadius: 12,
+    },
+    miniBadgeVerde: {
+      backgroundColor: "#10B981", // Verde
+    },
+    miniBadgeVermelho: {
+      backgroundColor: "#E02041", // Vermelho
+    },
+    miniBadgeTexto: {
+      color: "#FFFFFF",
       fontSize: 11,
-      color: '#6B7280',
-      marginTop: 2,
+      fontWeight: "bold",
+      textTransform: "uppercase",
     },
-    botaoFechar: {
+    btnFecharModal: {
+      marginTop: 20,
+      backgroundColor: "#1A1A1A",
       borderRadius: 8,
+      paddingVertical: 4,
     },
   });
